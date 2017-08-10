@@ -1,12 +1,15 @@
 package cc.heroy.strategy.htmlAnalyzer;
 
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.BlockingQueue;
+
+import org.apache.log4j.Logger;
 
 import cc.heroy.bean.IP;
 
-public interface BaseHtmlAnalyzer {
+public abstract class BaseHtmlAnalyzer {
 	
-	public void analyzer(String html , CopyOnWriteArrayList<IP> IPs);
+	Logger logger = Logger.getLogger(this.getClass());
 	
+	public abstract void analyzer(String html , BlockingQueue<IP> IPs);
 	
 }
