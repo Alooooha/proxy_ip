@@ -38,4 +38,24 @@ update (17-8-10)
      <br>被我排除。我设置httpclient请求连接时间和连接超时为2秒，没有效果，最后我分析报错，发现原来是httpclient重试
      <br>机制的锅，它默认重复请求3次！修改方法：[httpclient文档](http://hc.apache.org/httpcomponents-client-4.5.x/tutorial/html/index.html)1.5.4节。
 
-   
+update (17-9-15)
+------
+><br>使用IPTestTask任务对从网站上爬取的IP进行可用性测试时，测试线程在获取响应时遇见socket阻塞，导致线程无法进行工作,也无法关闭，如果不解决这个问题，而将项目放在服务器上，周期性执行爬虫任务，会引起阻塞线程累积，JVM内存不断减少，最终引起服务器崩溃。
+
+<br>我能想到的解决方案：
+<br>方案Ⅰ
+<br>         在发起HttpGet请求时HttpClient允许设置RequestConfig，在RequestConfig中有以下几个方法：
+<br>setSocketTimeout()：请求获取数据的超时时间，如果访问一个接口，多少时间内无法返回数据，就直接放弃此次调用。
+<br>setConnectTimeout()：设置连接超时时间。
+<br>setConnectionRequestTimeout()：设置从connect Manager获取Connection 超时时间。
+<br>我将他们分别设置为5000毫秒，经过多次测试，失败！
+<br>后来我使用DEBUG模式，并在IP测试线程均阻塞的情况下，暂停其中一个，在其栈区最上面的栈帧中找到了答案：
+![image]()
+<br>点击找到socketRead0()，发现这是个native方法，也就是说该方法不是由JAVA写的，JAVA代码对它无法产生影响。
+![image]()
+<br>
+<br>方案Ⅱ
+<br>          既然我无法阻止socket阻塞，那我把线程关掉总行吧。
+<br>首先我想到了线程自带的interrupt()方法，我在网上查看了interrupt()详解，发现当线程调用sleep()，wait()，join()进行阻塞状态，可通过interrupt()将线程中断，失败！
+<br>
+<br>
